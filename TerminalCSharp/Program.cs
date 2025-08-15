@@ -1,36 +1,43 @@
 ﻿
 class Program
 {
-
-    public static void ReadDirectory(string path)
+    public static void FindRecentUpdates(string path)
     {
-        DirectoryInfo di = new DirectoryInfo(path);
-        Console.WriteLine("The path in ReadDirectory is: ", path);
         try
         {
+            DirectoryInfo di = new DirectoryInfo(path);
             foreach (FileInfo fi in di.GetFiles())
             {
-                Console.WriteLine($"Name is: {fi.Name}, full name is: {fi.FullName}");
-                if (File.Exists(path))
+                if (fi.LastWriteTime >= DateTime.Now.AddDays(-1))
                 {
-                    System.Console.WriteLine($"{fi.FullName} is a file, not a directory");
-                }
-                else if (Directory.Exists(path))
-                {
-                    System.Console.WriteLine($"{fi.FullName} is a directory, not a file");
+                    Console.WriteLine($"{fi.FullName}");
                 }
             }
+            foreach (DirectoryInfo dirInfo in di.GetDirectories())
+            {
+                FindRecentUpdates(dirInfo.FullName);
+            }
         }
-        catch (Exception e)
+        catch (UnauthorizedAccessException e)
         {
-            Console.WriteLine($"Couldn't find {path}");
+            Console.Error.WriteLine($"{e} -- Access Denied. Please try another file.");
+        }
+        catch (IOException e)
+        {
+            Console.Error.WriteLine($"{e} -- Couldn't find {path}");
         }
     }
 
+
     static void Main(string[] args)
     {
-        string path = Path.Join(@"C:\", "Users", "Aiden", "dev");
-        Console.WriteLine(path);
-        ReadDirectory(path);
+        if (args.Length != 1)
+        {
+            Console.WriteLine("Please enter a file directory only.");
+            return;
+        }
+        Console.WriteLine("Files updated in the last week: ");
+        string path = args[0];
+        FindRecentUpdates(path);
     }
 }
